@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<script src="../lib/d3.v3.min.js"></script>
+<style>
+    .text{
+        font-family: arial;
+        font-weight：bold;
+        
+    }   
+</style>
+
+<body>
+<script >
+ var data=[{product:'Product A',freq:{Q1:576, Q2:1176, Q3:1009, Q4:494}},
+{product:'Product B',freq:{Q1:959, Q2:1653, Q3:1999, Q4:697}},
+{product:'Product C',freq:{Q1:3210, Q2:4220, Q3:1648, Q4:919}},
+{product:'Product D',freq:{Q1:589, Q2:2043, Q3:1153, Q4:911}},
+{product:'Product E',freq:{Q1:2599, Q2:1333, Q3:818, Q4:1713}},
+{product:'Product F',freq:{Q1:431, Q2:324, Q3:715, Q4:421}},
+{product:'Product G',freq:{Q1:1457, Q2:2557, Q3:2245, Q4:762}},
+{product:'Product H',freq:{Q1:2573, Q2:3357, Q3:1598, Q4:1287}}];
+console.log(data);
+
+var margin = {top: 20, right: 20, bottom: 70, left: 40},
+    width = 1400 - margin.left - margin.right,
+    height = 800 - margin.top - margin.bottom;
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", 
+          "translate(" + margin.left + "," + margin.top + ")");
+
+svg.selectAll("rect")
+      .data(data)
+      .enter().append("rect")
+      .style("fill", "DarkGray")
+      .attr("x", "120")
+      .attr("width", function(d) { return (d.freq.Q1+d.freq.Q2+d.freq.Q3+d.freq.Q4)/15; })
+      .attr("y", function(d,i) { return (30+50*(i+1)); })
+      .attr("height", "40")
+      .on('mouseover', handleMouseOver)
+      .on('mouseout', handleMouseOut);
+
+svg.selectAll("text1")
+      .data(data)
+      .enter().append("text")
+      .style("fill", "grey")
+      .text(function(d) { return d.product; })
+      .attr("x", "0")      
+      .attr("y", function(d,i) { return (60+50*(i+1)); })
+      .attr("class","text")
+      .attr("font-size", "18px");
+
+
+svg.selectAll("text2")
+      .data(data)
+      .enter().append("text")
+      .style("fill", "white")
+      .text(function(d) { return "$"+String(d.freq.Q1+d.freq.Q2+d.freq.Q3+d.freq.Q4); })
+      .attr("x", "160")      
+      .attr("y", function(d,i) { return (58+50*(i+1)); })
+      .attr("class","text")
+      .attr("font-size", "22px");
+
+function handleMouseOver(d, i) {
+    breakdown=[d.freq.Q1,d.freq.Q2,d.freq.Q3,d.freq.Q4];
+    d3.select(this).style("fill", "orange");
+    svg.selectAll("rect2")
+      .data(breakdown)
+      .enter().append("rect")
+      .style("fill", "LightSkyBlue")
+      .attr("x", "750")
+      .attr("id","rect2")
+      .attr("width", function(d) { return d/12; })
+      .attr("y", function(d,i) { return (40*(i)); })
+      .attr("height", "30");
+    svg.selectAll("text3")
+      .data(breakdown)
+      .enter().append("text")
+      .attr("id","text3")
+      .style("fill", "white")
+      .text(function(d) { return "$"+String(d); })
+      .attr("x", "754")      
+      .attr("y", function(d,i) { return (-20+40*(i+1)); })
+      .attr("class","text")
+      .attr("font-size", "14px");
+    svg.selectAll("text4")
+      .data(breakdown)
+      .enter().append("text")
+      .attr("id","text4")
+      .style("fill", "grey")
+      .text(function(d,i) { return "Q"+String(i+1); })
+      .attr("x", "720")      
+      .attr("y", function(d,i) { return (-20+40*(i+1)); })
+      .attr("class","text")
+      .attr("font-size", "15px");
+
+}
+
+function handleMouseOut(d, i) {
+    d3.selectAll("#text3").remove();
+    d3.selectAll("#rect2").remove();
+    d3.selectAll("#text4").remove();
+    d3.select(this).style("fill", "DarkGray");
+
+}
+
+
+
+
+</script>
+</body>
+</html>

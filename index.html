@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script type="text/javascript" src="../lib/d3.v3.min.js"></script>
+  <script src="../lib/d3-queue.v3.min.js"></script>
+  <script src="../lib/topojson.v1.min.js"></script>
+  <script src="../lib/d3.tip.v0.6.3.js"></script>
+</head>
+<style>
+
+path {
+  stroke:white;
+  stroke-width: 1px;
+}
+
+body {
+  font-family: Arial, sans-serif;
+}
+
+.city {
+  font: 10px sans-serif;
+  font-weight: bold;
+}
+
+.legend {
+  font-size: 14px;
+}
+
+.tooltip {   
+  position: absolute;           
+  text-align: center;           
+  padding: 8px;             
+  font-size: 12px; 
+  color: lemonChiffon;
+  font-weight:bold;    
+  background: black;
+  border: 1px;      
+  border-radius: 8px;           
+  pointer-events: none;         
+}        
+</style>
+<body>
+  <script type="text/javascript">
+  var width = 960,
+  height = 500;
+
+  var color_domain = [15000, 18000, 21000, 24000, 27000,30000,33000];           
+  var color = d3.scale.threshold()
+  .domain(color_domain)
+  .range(["#BFF19E", "#83E172", "#4BC452", "#35A63C", "#218828","#0F5D14","#09460D"]);
+
+  var div = d3.select("body").append("div")   
+  .attr("class", "tooltip")               
+  .style("opacity", 0);
+
+  var svg = d3.select("body").append("svg")
+  .attr("width", width)
+  .attr("height", height)
+  .style("margin", "10px auto");
+
+  var projection = d3.geo.albersUsa()
+           .translate([width/2, height/2])    // translate to center of screen
+           .scale([1000]);          // scale things down so see entire US
+
+  var path = d3.geo.path().projection(projection);
+
+
+  //Reading map file 
+
+  d3.queue()
+  .defer(d3.json, "us.json")
+  .defer(d3.json, "median_earnings.json")
+  .defer(d3.csv, "sat_scores.csv")
+  .await(ready);
+
+  //Start of Choropleth drawing
+
+  function ready(error, map, data,scores) {
+   var SalaryById = {};
+   var ScoreById = {};
+
+   data.forEach(function(d) {
+    SalaryById[d.id] = +d.median_earnings;
+    ScoreById[d.id]=[];
+    //console.log(d);
+  });
+
+   scores.forEach(function(d) {
+    d.id=+d.id;
+    d.name=d.name;
+    d.sat_avg=d.sat_avg;
+    ScoreById[d.id].push({"id":d.id,"name":d.name,"sat":d.sat_avg}); 
+   });
+   console.log(ScoreById);
+
+   data.forEach(function(d) {
+    ScoreById[d.id].sort(function(a, b){
+                  return b.sat-a.sat;
+              });
+  });   
+
+    //create the tooltip
+    var tip = d3.tip()
+             .attr('class', 'tooltip')
+             .html(function(d) {
+               text = "";
+               i = 0;
+               while (i < 5 && i<ScoreById[d.id].length) {
+                   text += ScoreById[d.id][i].name +" (SAT : " + String(ScoreById[d.id][i].sat) +")<br/>";
+                   i++;
+               }
+               return text;                
+             });
+
+  svg.call(tip); 
+
+  //Drawing Choropleth
+
+  svg.append("g")
+  .attr("class", "region")
+  .selectAll("path")
+  .data(topojson.feature(map, map.objects.states).features)
+  .enter().append("path")
+  .attr("d", path)
+  .style("fill", function(d) {
+    return color(SalaryById[d.id]); 
+  })
+  .style("opacity", 0.9)        
+  .on('mouseover', tip.show)
+  .on('mouseout', tip.hide)};
+  
+ 
+  //Adding legend for our Choropleth  
+  var color_output = [15000, 18000, 21000, 24000, 27000,30000,33000];   
+  var legend_labels = ["33000", "30000", "27000", "24000", "21000", "18000","15000"];  
+
+  var legend = svg.selectAll("g.legend")
+  .data(color_output.reverse())
+  .enter().append("g")
+  .attr("class", "legend");
+
+  legend.append("rect")
+  .attr("x", 850)
+  .attr("y", function(d, i){ return height - 20*i -80;})
+  .attr("width", 22)
+  .attr("height", 22)
+  .style("fill", function(d, i) { return color(d); })
+  .style("opacity", 0.8);
+
+  legend.append("text")
+  .attr("x", 880)
+  .attr("y", function(d, i){ return height - 20*i -64;})
+  .text(function(d, i){ return "$"+legend_labels[i]; });
+
+  </script>
+</body>
+</html>
